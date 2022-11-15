@@ -54,8 +54,8 @@ func StackImages(imgs ...image.Image) {
 
 }
 
-func GrayScale(imgs ...image.Image) []*image.Gray {
-	gsimgs := make([]*image.Gray, len(imgs))
+func GrayScale(imgs ...image.Image) []image.Image {
+	gsimgs := make([]image.Image, len(imgs))
 
 	for i, iimg := range imgs {
 		img := NewGenericImage(iimg)

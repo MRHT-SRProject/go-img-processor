@@ -2,9 +2,7 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"image"
-	"image/png"
 	"log"
 	"os"
 
@@ -34,12 +32,7 @@ func main() {
 	}
 
 	gsimgs := processors.GrayScale(images...)
-	for i, v := range gsimgs {
-		f, err := os.Create(fmt.Sprintf("%d.png", i));
-		handleError(err, "Failed to create ", i, ".png")
-		png.Encode(f, &v);
-	}
-	print(gsimgs)
+	processors.StackImages(gsimgs...)
 }
 
 func handleError(err error, v ...any) {
