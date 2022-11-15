@@ -17,7 +17,7 @@ func main() {
 	csv_reader := csv.NewReader(csv_file)
 	file_list, err := csv_reader.ReadAll()
 	handleError(err, "Failed to parse csv file")
-	images := make([]image.RGBA, len(file_list))
+	images := make([]image.Image, len(file_list))
 	for i, info := range file_list {
 		fname := info[0]
 		raw, err := os.Open("/home/rich/code/camcapture/test/" + fname)
@@ -30,8 +30,7 @@ func main() {
 		raw.Close()
 		img, _, err := processors.GetImageFromRaw(buffer)
 		handleError(err, "Failed to convert raw file ", fname, " to image")
-		rgba, _ := img.(*image.RGBA)
-		images[i] = *rgba;
+		images[i] = img;
 	}
 
 	gsimgs := processors.GrayScale(images...)

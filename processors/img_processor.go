@@ -14,27 +14,31 @@ import (
 	libraw "github.com/richbai90/golibraw"
 )
 
-type Image struct {
-	image.Image
-	Exposure float32
-}
-
 func GetImageFromRaw(rawImg []byte) (image.Image, libraw.ImgMetadata, error) {
 	return libraw.RawBuffer2Image(rawImg)
 }
 
 func StackImages(imgs ...image.Image) {
+
 	cImgLen := len(imgs)
 	cImages := make([]C.Image, cImgLen)
 	for i, iimg := range imgs {
-		img := iimg.(*image.RGBA)
-		imgDataC := sliceToCArray(img.Pix, C.uchar(0))
+		img := NewGenericImage(iimg)
+		pix, ok := img.GetPix()
+		if !ok {
+			continue
+		}
+		rect, ok := img.GetRect()
+		if !ok {
+			continue
+		}
+		imgDataC := sliceToCArray(pix, C.uchar(0))
 		cImage := C.Image{
 			pixels: (*C.uchar)(imgDataC),
-			x0:     C.uint(img.Rect.Min.X),
-			x1:     C.uint(img.Rect.Max.X),
-			y0:     C.uint(img.Rect.Min.Y),
-			y1:     C.uint(img.Rect.Max.Y),
+			x0:     C.uint(rect.Min.X),
+			x1:     C.uint(rect.Max.X),
+			y0:     C.uint(rect.Min.Y),
+			y1:     C.uint(rect.Max.Y),
 		}
 		cImages[i] = cImage
 	}
@@ -50,26 +54,28 @@ func StackImages(imgs ...image.Image) {
 
 }
 
-func GrayScale(imgs ...image.RGBA) []image.Gray {
+func GrayScale(imgs ...image.Image) []image.Gray {
 	gsimgs := make([]image.Gray, len(imgs))
 
-	for i, img := range imgs {
-		rect := img.Rect
-		imgDataC := sliceToCArray(img.Pix, C.uchar(0))
+	for i, iimg := range imgs {
+		img := NewGenericImage(iimg)
+		rect, _ := img.GetRect()
+		pix, _ := img.GetPix()
+		imgDataC := sliceToCArray(pix, C.uchar(0))
 		cImage := C.Image{
 			pixels: (*C.uchar)(imgDataC),
-			x0:     C.uint(img.Rect.Min.X),
-			x1:     C.uint(img.Rect.Max.X),
-			y0:     C.uint(img.Rect.Min.Y),
-			y1:     C.uint(img.Rect.Max.Y),
+			x0:     C.uint(rect.Min.X),
+			x1:     C.uint(rect.Max.X),
+			y0:     C.uint(rect.Min.Y),
+			y1:     C.uint(rect.Max.Y),
 		}
 
 		gs := C.grayscale(cImage)
 		cpixels := C.getPixels(gs)
 		gsimg := image.NewGray(rect)
-		gsimg.Pix = unsafe.Slice((*uint8)(cpixels.pixels), cpixels.len);
+		gsimg.Pix = unsafe.Slice((*uint8)(cpixels.pixels), cpixels.len)
 		gsimgs[i] = *gsimg
-		
+
 	}
 
 	return gsimgs
