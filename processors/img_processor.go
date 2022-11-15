@@ -54,8 +54,8 @@ func StackImages(imgs ...image.Image) {
 
 }
 
-func GrayScale(imgs ...image.Image) []image.Gray {
-	gsimgs := make([]image.Gray, len(imgs))
+func GrayScale(imgs ...image.Image) []*image.Gray {
+	gsimgs := make([]*image.Gray, len(imgs))
 
 	for i, iimg := range imgs {
 		img := NewGenericImage(iimg)
@@ -74,7 +74,7 @@ func GrayScale(imgs ...image.Image) []image.Gray {
 		cpixels := C.getPixels(gs)
 		gsimg := image.NewGray(rect)
 		gsimg.Pix = unsafe.Slice((*uint8)(cpixels.pixels), cpixels.len)
-		gsimgs[i] = *gsimg
+		gsimgs[i] = gsimg
 
 	}
 
