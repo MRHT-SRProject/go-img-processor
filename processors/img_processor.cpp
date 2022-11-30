@@ -10,11 +10,23 @@
 #include <string.h>
 #include <vector>
 
-void stackImages(Image *img, size_t len)
+CPixels cvMatToCPixels(cv::Mat);
+
+CMat colorize(CMat img, uint8_t map)
+{
+    cv::Mat *colorized = new cv::Mat;
+    cv::applyColorMap(*((cv::Mat *)img.mat), *colorized, map);
+
+    CMat cmat = CMat{
+        .mat = colorized};
+
+    return cmat;
+}
+
+CMat stackImages(Image *img, size_t len)
 {
     cv::Mat firstImg;
     cv::Mat stacked;
-    cv::Mat colorized;
     for (int i = 0; i < len; i++)
     {
         // Transformation matrix
@@ -39,17 +51,18 @@ void stackImages(Image *img, size_t len)
         stacked += warped;
     }
 
-    cv::applyColorMap(stacked, colorized, cv::COLORMAP_PLASMA);
-    // write the image
-    cv::imwrite("stacked.jpg", colorized);
+    // cv::applyColorMap(stacked, colorized, cv::COLORMAP_PLASMA);
+    CMat cmat = CMat{
+        .mat = new cv::Mat(stacked.clone())
+    };
+
+    return cmat;
 }
 
 CPixels getPixels(CMat mat)
 {
     cv::Mat cvmat = *(cv::Mat *)(mat.mat);
-    return (CPixels){
-        .pixels = cvmat.data,
-        .len = cvmat.total(0)};
+    return cvMatToCPixels(cvmat);
 }
 
 CMat grayscale(Image img)
@@ -58,4 +71,17 @@ CMat grayscale(Image img)
     cv::Mat *gray = new cv::Mat();
     cv::cvtColor(pixels, *gray, cv::COLOR_RGBA2GRAY);
     return CMat{.mat = gray};
+}
+
+void cMatToImg(CMat mat, const char* filename)
+{
+    cv::Mat *m = (cv::Mat *)(mat.mat);
+    cv::imwrite(filename, *m);
+}
+
+CPixels cvMatToCPixels(cv::Mat mat)
+{
+    return (CPixels){
+        .pixels = mat.data,
+        .len = mat.total(0)};
 }

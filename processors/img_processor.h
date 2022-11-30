@@ -1,7 +1,6 @@
 #ifndef __STACK__
 #define __STACK__
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -25,11 +24,14 @@ extern "C"
         uint32_t x1;
         uint32_t y0;
         uint32_t y1;
+        size_t len;
     } Image;
 
-    void stackImages(Image *img, size_t len);
+    CMat stackImages(Image *img, size_t len);
     CMat grayscale(Image img);
     CPixels getPixels(CMat mat);
+    CMat colorize(CMat img, uint8_t map);
+    void cMatToImg(CMat mat, const char* filename);
 
 #ifdef __cplusplus
 }

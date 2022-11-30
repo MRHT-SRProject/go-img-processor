@@ -21,3 +21,10 @@ func sliceToCArray[T, V any](slice []T, to V) unsafe.Pointer {
 
 	return cArray
 }
+
+func cArrToSlice[V any](cArr unsafe.Pointer, to V, len uint) []V {
+	s := unsafe.Slice((*V)(cArr), len)
+	ret := make([]V, len)
+	copy(ret, s)
+	return ret
+}

@@ -14,11 +14,38 @@ import (
 	libraw "github.com/richbai90/golibraw"
 )
 
+type ColormapTypes uint8
+
+const (
+	COLORMAP_AUTUMN           ColormapTypes = 0
+	COLORMAP_BONE             ColormapTypes = 1
+	COLORMAP_JET              ColormapTypes = 2
+	COLORMAP_WINTER           ColormapTypes = 3
+	COLORMAP_RAINBOW          ColormapTypes = 4
+	COLORMAP_OCEAN            ColormapTypes = 5
+	COLORMAP_SUMMER           ColormapTypes = 6
+	COLORMAP_SPRING           ColormapTypes = 7
+	COLORMAP_COOL             ColormapTypes = 8
+	COLORMAP_HSV              ColormapTypes = 9
+	COLORMAP_PINK             ColormapTypes = 10
+	COLORMAP_HOT              ColormapTypes = 11
+	COLORMAP_PARULA           ColormapTypes = 12
+	COLORMAP_MAGMA            ColormapTypes = 13
+	COLORMAP_INFERNO          ColormapTypes = 14
+	COLORMAP_PLASMA           ColormapTypes = 15
+	COLORMAP_VIRIDIS          ColormapTypes = 16
+	COLORMAP_CIVIDIS          ColormapTypes = 17
+	COLORMAP_TWILIGHT         ColormapTypes = 18
+	COLORMAP_TWILIGHT_SHIFTED ColormapTypes = 19
+	COLORMAP_TURBO            ColormapTypes = 20
+	COLORMAP_DEEPGREEN        ColormapTypes = 21
+)
+
 func GetImageFromRaw(rawImg []byte) (image.Image, libraw.ImgMetadata, error) {
 	return libraw.RawBuffer2Image(rawImg)
 }
 
-func StackImages(imgs ...image.Image) {
+func StackImages(imgs ...image.Image) C.CMat {
 
 	cImgLen := len(imgs)
 	cImages := make([]C.Image, cImgLen)
@@ -43,7 +70,9 @@ func StackImages(imgs ...image.Image) {
 		cImages[i] = cImage
 	}
 	cimgs := (*C.Image)(sliceToCArray(cImages, C.Image{}))
-	C.stackImages(cimgs, C.size_t(cImgLen))
+
+	stacked := C.stackImages(cimgs, C.size_t(cImgLen))
+
 	defer func() {
 		for _, img := range cImages {
 			C.free(unsafe.Pointer(img.pixels))
@@ -52,6 +81,11 @@ func StackImages(imgs ...image.Image) {
 		C.free(unsafe.Pointer(cimgs))
 	}()
 
+	return stacked
+}
+
+func Colorize(img C.CMat, colormap ColormapTypes) C.CMat {
+	return C.colorize(img, C.uchar(colormap))
 }
 
 func GrayScale(imgs ...image.Image) []image.Image {
@@ -73,10 +107,17 @@ func GrayScale(imgs ...image.Image) []image.Image {
 		gs := C.grayscale(cImage)
 		cpixels := C.getPixels(gs)
 		gsimg := image.NewGray(rect)
-		gsimg.Pix = unsafe.Slice((*uint8)(cpixels.pixels), cpixels.len)
+		gsimg.Pix = cArrToSlice(unsafe.Pointer(cpixels.pixels), uint8(0), uint(cpixels.len))
 		gsimgs[i] = gsimg
 
+		defer func ()  {
+			C.free(gs.mat)
+		}()
 	}
 
 	return gsimgs
+}
+
+func CMatToImg(mat C.CMat, filename string) {
+	C.cMatToImg(mat, C.CString(filename));
 }
