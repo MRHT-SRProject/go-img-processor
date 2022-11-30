@@ -32,7 +32,10 @@ func main() {
 	}
 
 	gsimgs := processors.GrayScale(images...)
-	processors.StackImages(gsimgs...)
+	stacked := processors.StackImages(gsimgs...)
+	colorized := processors.Colorize(stacked, processors.COLORMAP_AUTUMN)
+	handleError(err, "failed to colorize image")
+	processors.CMatToImg(colorized, "stacked.jpg")
 }
 
 func handleError(err error, v ...any) {
