@@ -11,6 +11,7 @@
 #include <vector>
 
 CPixels cvMatToCPixels(cv::Mat);
+Buffer vecToCBuf(std::vector<u_int8_t>&);
 
 CMat colorize(CMat img, uint8_t map)
 {
@@ -53,8 +54,7 @@ CMat stackImages(Image *img, size_t len)
 
     // cv::applyColorMap(stacked, colorized, cv::COLORMAP_PLASMA);
     CMat cmat = CMat{
-        .mat = new cv::Mat(stacked.clone())
-    };
+        .mat = new cv::Mat(stacked.clone())};
 
     return cmat;
 }
@@ -73,10 +73,12 @@ CMat grayscale(Image img)
     return CMat{.mat = gray};
 }
 
-void cMatToImg(CMat mat, const char* filename)
+Buffer cMatToImg(CMat mat)
 {
+    std::vector<uint8_t> buf;
     cv::Mat *m = (cv::Mat *)(mat.mat);
-    cv::imwrite(filename, *m);
+    cv::imencode(".ppm", *(cv::Mat *)(mat.mat), buf);
+    return vecToCBuf(buf);
 }
 
 CPixels cvMatToCPixels(cv::Mat mat)
@@ -84,4 +86,17 @@ CPixels cvMatToCPixels(cv::Mat mat)
     return (CPixels){
         .pixels = mat.data,
         .len = mat.total(0)};
+}
+
+Buffer vecToCBuf(std::vector<uint8_t>& vec)
+{
+    uint8_t *cbuf = (uint8_t *)malloc(vec.size());
+    for (int i = 0; i < vec.size(); i++)
+    {
+        cbuf[i] = vec[i];
+    }
+    return Buffer {
+        .data = cbuf,
+        .len = vec.size()
+    };
 }

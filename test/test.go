@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"image"
+	"image/png"
 	"log"
 	"os"
 
@@ -35,7 +36,11 @@ func main() {
 	stacked := processors.StackImages(gsimgs...)
 	colorized := processors.Colorize(stacked, processors.COLORMAP_AUTUMN)
 	handleError(err, "failed to colorize image")
-	processors.CMatToImg(colorized, "stacked.jpg")
+	img, err := processors.CMatToImg(colorized)
+	handleError(err, "failed to convert matrix to image")
+	f, err := os.Create("stacked.png")
+	handleError(err, "Failed to create file stacked.png")
+	png.Encode(f, img)
 }
 
 func handleError(err error, v ...any) {

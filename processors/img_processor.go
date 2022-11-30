@@ -8,9 +8,11 @@ package processors
 import "C"
 
 import (
+	"bytes"
 	"image"
 	"unsafe"
 
+	"github.com/lmittmann/ppm"
 	libraw "github.com/richbai90/golibraw"
 )
 
@@ -118,6 +120,10 @@ func GrayScale(imgs ...image.Image) []image.Image {
 	return gsimgs
 }
 
-func CMatToImg(mat C.CMat, filename string) {
-	C.cMatToImg(mat, C.CString(filename));
+func CMatToImg(mat C.CMat) (image.Image, error) {
+	buf := C.cMatToImg(mat);
+	defer C.free(unsafe.Pointer(buf.data))
+	s := cArrToSlice(unsafe.Pointer(buf.data), uint8(0), uint(buf.len))
+	ppmData := bytes.NewBuffer(s)
+	return ppm.Decode(ppmData)
 }

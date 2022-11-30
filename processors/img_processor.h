@@ -27,11 +27,16 @@ extern "C"
         size_t len;
     } Image;
 
+    typedef struct Buffer {
+        uint8_t* data;
+        size_t len;
+    } Buffer;
+
     CMat stackImages(Image *img, size_t len);
     CMat grayscale(Image img);
     CPixels getPixels(CMat mat);
     CMat colorize(CMat img, uint8_t map);
-    void cMatToImg(CMat mat, const char* filename);
+    Buffer cMatToImg(CMat mat);
 
 #ifdef __cplusplus
 }
