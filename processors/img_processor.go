@@ -49,7 +49,7 @@ func GetImageFromRaw(rawImg []byte) (image.Image, libraw.ImgMetadata, error) {
 	return libraw.RawBuffer2Image(rawImg)
 }
 
-func StackImages(imgs ...image.Image) (C.CMat, error) {
+func StackImages(imgs ...image.Image) (CMat, error) {
 
 	cImgLen := len(imgs)
 	cImages := make([]C.Image, cImgLen)
@@ -87,22 +87,22 @@ func StackImages(imgs ...image.Image) (C.CMat, error) {
 
 	err := errFromResp(stacked)
 	if err != nil {
-		return C.CMat{}, err
+		return CMat{}, err
 	}
 
-	return C.CMat{
+	return CMat{
 		mat: stacked.data,
 	}, nil
 }
 
-func Colorize(img C.CMat, colormap ColormapTypes) (C.CMat, error) {
+func Colorize(img CMat, colormap ColormapTypes) (CMat, error) {
 	resp := C.colorize(img, C.uchar(colormap))
 	err := errFromResp(resp)
 	if err != nil {
-		return C.CMat{}, err
+		return CMat{}, err
 	}
 
-	return C.CMat{
+	return CMat{
 		mat: resp.data,
 	}, nil
 }
@@ -128,7 +128,7 @@ func GrayScale(imgs ...image.Image) ([]image.Image, error) {
 		if err != nil {
 			return imgs, err
 		}
-		gs := C.CMat{mat: resp.data}
+		gs := CMat{mat: resp.data}
 		cpixels := C.getPixels(gs)
 		gsimg := image.NewGray(rect)
 		gsimg.Pix = cArrToSlice(unsafe.Pointer(cpixels.pixels), uint8(0), uint(cpixels.len))
@@ -142,7 +142,7 @@ func GrayScale(imgs ...image.Image) ([]image.Image, error) {
 	return gsimgs, nil
 }
 
-func CMatToImg(mat C.CMat) (image.Image, error) {
+func CMatToImg(mat CMat) (image.Image, error) {
 	buf := C.cMatToImg(mat)
 	defer C.free(unsafe.Pointer(buf.data))
 	err := errFromResp(buf)
