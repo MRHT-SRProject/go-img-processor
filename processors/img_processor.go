@@ -96,7 +96,7 @@ func StackImages(imgs ...image.Image) (CMat, error) {
 }
 
 func Colorize(img CMat, colormap ColormapTypes) (CMat, error) {
-	resp := C.colorize(img, C.uchar(colormap))
+	resp := C.colorize(C.CMat(img), C.uchar(colormap))
 	err := errFromResp(resp)
 	if err != nil {
 		return CMat{}, err
@@ -129,7 +129,7 @@ func GrayScale(imgs ...image.Image) ([]image.Image, error) {
 			return imgs, err
 		}
 		gs := CMat{mat: resp.data}
-		cpixels := C.getPixels(gs)
+		cpixels := C.getPixels(C.CMat(gs))
 		gsimg := image.NewGray(rect)
 		gsimg.Pix = cArrToSlice(unsafe.Pointer(cpixels.pixels), uint8(0), uint(cpixels.len))
 		gsimgs[i] = gsimg
@@ -143,7 +143,7 @@ func GrayScale(imgs ...image.Image) ([]image.Image, error) {
 }
 
 func CMatToImg(mat CMat) (image.Image, error) {
-	buf := C.cMatToImg(mat)
+	buf := C.cMatToImg(C.CMat(mat))
 	defer C.free(unsafe.Pointer(buf.data))
 	err := errFromResp(buf)
 	if err != nil {
