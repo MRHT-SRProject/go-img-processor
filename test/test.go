@@ -32,9 +32,11 @@ func main() {
 		images[i] = img;
 	}
 
-	gsimgs := processors.GrayScale(images...)
-	stacked := processors.StackImages(gsimgs...)
-	colorized := processors.Colorize(stacked, processors.COLORMAP_AUTUMN)
+	gsimgs, err := processors.GrayScale(images...)
+	handleError(err, "failed to convert images to grayscale")
+	stacked, err := processors.StackImages(gsimgs...)
+	handleError(err, "failed to stack images")
+	colorized, err := processors.Colorize(stacked, processors.COLORMAP_AUTUMN)
 	handleError(err, "failed to colorize image")
 	img, err := processors.CMatToImg(colorized)
 	handleError(err, "failed to convert matrix to image")

@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"unsafe"
 
@@ -47,7 +48,7 @@ func GetImageFromRaw(rawImg []byte) (image.Image, libraw.ImgMetadata, error) {
 	return libraw.RawBuffer2Image(rawImg)
 }
 
-func StackImages(imgs ...image.Image) C.CMat {
+func StackImages(imgs ...image.Image) (C.CMat, error) {
 
 	cImgLen := len(imgs)
 	cImages := make([]C.Image, cImgLen)
@@ -83,14 +84,29 @@ func StackImages(imgs ...image.Image) C.CMat {
 		C.free(unsafe.Pointer(cimgs))
 	}()
 
-	return stacked
+	err := errFromResp(stacked)
+	if err != nil {
+		return C.CMat{}, err
+	}
+
+	return C.CMat{
+		mat: stacked.data,
+	}, nil
 }
 
-func Colorize(img C.CMat, colormap ColormapTypes) C.CMat {
-	return C.colorize(img, C.uchar(colormap))
+func Colorize(img C.CMat, colormap ColormapTypes) (C.CMat, error) {
+	resp := C.colorize(img, C.uchar(colormap))
+	err := errFromResp(resp)
+	if err != nil {
+		return C.CMat{}, err
+	}
+
+	return C.CMat{
+		mat: resp.data,
+	}, nil
 }
 
-func GrayScale(imgs ...image.Image) []image.Image {
+func GrayScale(imgs ...image.Image) ([]image.Image, error) {
 	gsimgs := make([]image.Image, len(imgs))
 
 	for i, iimg := range imgs {
@@ -106,24 +122,42 @@ func GrayScale(imgs ...image.Image) []image.Image {
 			y1:     C.uint(rect.Max.Y),
 		}
 
-		gs := C.grayscale(cImage)
+		resp := C.grayscale(cImage)
+		err := errFromResp(resp)
+		if err != nil {
+			return imgs, err
+		}
+		gs := C.CMat{mat: resp.data}
 		cpixels := C.getPixels(gs)
 		gsimg := image.NewGray(rect)
 		gsimg.Pix = cArrToSlice(unsafe.Pointer(cpixels.pixels), uint8(0), uint(cpixels.len))
 		gsimgs[i] = gsimg
 
-		defer func ()  {
+		defer func() {
 			C.free(gs.mat)
 		}()
 	}
 
-	return gsimgs
+	return gsimgs, nil
 }
 
 func CMatToImg(mat C.CMat) (image.Image, error) {
-	buf := C.cMatToImg(mat);
+	buf := C.cMatToImg(mat)
 	defer C.free(unsafe.Pointer(buf.data))
+	err := errFromResp(buf)
+	if err != nil {
+		return nil, err
+	}
 	s := cArrToSlice(unsafe.Pointer(buf.data), uint8(0), uint(buf.len))
 	ppmData := bytes.NewBuffer(s)
 	return ppm.Decode(ppmData)
+}
+
+func errFromResp(resp C.Response) error {
+	if resp.status != 0 {
+		str := cArrToSlice(resp.data, ' ', uint(resp.len))
+		return errors.New(string(str))
+	}
+
+	return nil
 }

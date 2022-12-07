@@ -7,6 +7,16 @@ extern "C"
 #endif
 #include <stdlib.h>
 #include <inttypes.h>
+
+
+    typedef struct Response {
+        int status;
+        size_t len;
+        const char * dataType;
+        void * data;
+    } Response;
+
+
     typedef struct CMat {
         void* mat;
     } CMat;
@@ -32,11 +42,11 @@ extern "C"
         size_t len;
     } Buffer;
 
-    CMat stackImages(Image *img, size_t len);
-    CMat grayscale(Image img);
+    Response stackImages(Image *img, size_t len);
+    Response grayscale(Image img);
+    Response colorize(CMat img, uint8_t map);
+    Response cMatToImg(CMat mat);
     CPixels getPixels(CMat mat);
-    CMat colorize(CMat img, uint8_t map);
-    Buffer cMatToImg(CMat mat);
 
 #ifdef __cplusplus
 }

@@ -6,4 +6,4 @@ go 1.19
 
 require github.com/richbai90/golibraw v0.0.4
 
-require github.com/lmittmann/ppm v1.0.1 // indirect
+require github.com/lmittmann/ppm v1.0.1
