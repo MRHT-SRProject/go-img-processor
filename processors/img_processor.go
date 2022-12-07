@@ -18,6 +18,7 @@ import (
 )
 
 type ColormapTypes uint8
+type CMat C.CMat
 
 const (
 	COLORMAP_AUTUMN           ColormapTypes = 0
