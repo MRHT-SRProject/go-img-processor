@@ -69,6 +69,22 @@ Response colorize(CMat img, uint8_t map)
  */
 Response stackImages(Image *img, size_t len)
 {
+    char* env_correlation_threshold = std::getenv("CORRELATION_THRESHOLD");
+    char* env_correlation_iterations = std::getenv("CORRELATION_ITERATIONS");
+
+    double correlationThreshold = std::stod(env_correlation_threshold);
+    int corrrelationIterations = std::stoi(env_correlation_iterations);
+
+    if (correlationThreshold <= 0) {
+        // default
+        correlationThreshold = 1e-3;
+    }
+
+    if (corrrelationIterations <= 0) {
+        //default
+        corrrelationIterations = 100;
+    }
+
     cv::Mat firstImg;
     cv::Mat stacked;
     Response resp;
@@ -85,12 +101,10 @@ Response stackImages(Image *img, size_t len)
                 stacked = pixels;
                 continue;
             }
-            cv::Mat warped;
             // create the transformation matrix
-            const int iterations = 100;         // 300 iterations for alignment
-            const double terminationEps = 1e-6; // Threshold in correleation
+            cv::Mat warped;
             // define termination criteria
-            cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, iterations, terminationEps);
+            cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, corrrelationIterations, correlationThreshold);
             cv::findTransformECC(firstImg, pixels, M, cv::MOTION_HOMOGRAPHY, criteria);
             // warp the image according ot the transformation matrix
             cv::warpPerspective(pixels, warped, M, pixels.size(), cv::INTER_LINEAR + cv::WARP_INVERSE_MAP);
